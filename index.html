@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Генератор надёжных паролей</title>
+    <!-- Font Awesome 6 (иконки) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #e5e7eb;   /* серый фон */
+            font-family: 'Segoe UI', Roboto, system-ui, 'Helvetica Neue', sans-serif;
+            line-height: 1.5;
+            color: #1f2937;
+        }
+
+        /* каждый блок — на всю ширину, без скруглений */
+        .block {
+            width: 100%;
+            background: #f9fafb;
+            border-bottom: 1px solid #d1d5db;
+            padding: 2rem 1.5rem;
+        }
+
+        /* внутренний контент блоков ограничиваем для читаемости, но сам блок растянут */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* шапка */
+        .header-block {
+            background: #eef2f5;
+            border-bottom: 1px solid #cbd5e1;
+        }
+        .header-content {
+            text-align: center;
+        }
+        .header-content h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            letter-spacing: -0.3px;
+            margin-bottom: 0.25rem;
+        }
+        .header-content .icon-lock {
+            font-size: 2rem;
+            color: #4b5563;
+            margin-bottom: 0.5rem;
+        }
+        .sub {
+            color: #4b5563;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        /* блок генератора — серый фон, строгие линии */
+        .generator-block {
+            background: #ffffff;
+        }
+        .password-area {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.8rem;
+            flex-wrap: wrap;
+        }
+        .password-input {
+            flex: 3;
+        }
+        .password-input input {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            font-size: 1.2rem;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            background: #f3f4f6;
+            border: 1px solid #9ca3af;
+            border-radius: 0;      /* Нет скруглений */
+            color: #111827;
+            font-weight: 500;
+        }
+        .password-input input:focus {
+            outline: none;
+            border-color: #6b7280;
+            background: #ffffff;
+        }
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+        }
+        button {
+            background: #4b5563;
+            border: none;
+            padding: 0 1.5rem;
+            border-radius: 0;      /* Прямые углы */
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: white;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+            font-family: inherit;
+            height: 48px;
+        }
+        button i {
+            font-size: 1rem;
+        }
+        button:hover {
+            background: #374151;
+        }
+        .copy-btn {
+            background: #2b6e4f;
+        }
+        .copy-btn:hover {
+            background: #1f5940;
+        }
+
+        /* настройки */
+        .settings {
+            background: #f3f4f6;
+            padding: 1.2rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #d1d5db;
+        }
+        .length-control {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 1.2rem;
+            gap: 12px;
+        }
+        .length-control label {
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .length-control input {
+            width: 85px;
+            padding: 0.5rem;
+            font-size: 1rem;
+            text-align: center;
+            border: 1px solid #9ca3af;
+            border-radius: 0;
+            background: white;
+        }
+        .checkboxes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.2rem;
+            row-gap: 0.7rem;
+        }
+        .checkboxes label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 0.3rem 0.9rem;
+            cursor: pointer;
+            font-weight: 500;
+            color: #1f2937;
+            border: 1px solid #cbd5e1;
+        }
+        .checkboxes input {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #4b5563;
+        }
+
+        /* индикатор надёжности */
+        .strength-section {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            padding: 1rem;
+            margin-top: 0.25rem;
+        }
+        .strength-meter {
+            background: #d1d5db;
+            height: 10px;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+        .strength-fill {
+            width: 0%;
+            height: 100%;
+            background: #6b7280;
+            transition: width 0.2s;
+        }
+        .strength-text {
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .entropy-bits {
+            font-family: monospace;
+            background: #e5e7eb;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        /* блок рекомендаций */
+        .tips-block {
+            background: #f0f2f5;
+            border-top: 1px solid #cbd5e1;
+            border-bottom: 1px solid #cbd5e1;
+        }
+        .tips-block h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2rem;
+            color: #1e293b;
+            margin-bottom: 1.2rem;
+            font-weight: 700;
+        }
+        .tips-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        .tips-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: #2d3a48;
+        }
+        .tips-list li i {
+            color: #4b5563;
+            font-size: 1rem;
+            margin-top: 2px;
+            min-width: 22px;
+        }
+        .technical-note {
+            margin-top: 1.2rem;
+            font-size: 0.8rem;
+            background: #e5e7eb;
+            padding: 0.6rem 0.8rem;
+            border-left: 3px solid #6b7280;
+        }
+
+        /* подвал */
+        .footer-block {
+            background: #eef2f5;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #4b5563;
+            border-top: 1px solid #cbd5e1;
+        }
+
+        /* адаптивность */
+        @media (max-width: 700px) {
+            .block {
+                padding: 1.5rem 1rem;
+            }
+            .password-area {
+                flex-direction: column;
+            }
+            .btn-group button {
+                flex: 1;
+                justify-content: center;
+            }
+            .tips-list {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 480px) {
+            .checkboxes label {
+                padding: 0.2rem 0.7rem;
+                font-size: 0.8rem;
+            }
+            .header-content h1 {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* дополнительные утилиты */
+        .no-radius {
+            border-radius: 0px !important;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #d4d4d8;
+        }
+    </style>
+</head>
+<body>
+
+<!-- БЛОК 1: ШАПКА (растянут на всю ширину) -->
+<div class="block header-block">
+    <div class="container">
+        <div class="header-content">
+            <h1><i class="fas fa-key"></i> Генератор надёжных паролей</h1>
+            <div class="sub">Простой сайт для генерации сложного пароля для любого сервиса</div>
+        </div>
+    </div>
+</div>
+
+<!-- БЛОК 2: ГЕНЕРАТОР -->
+<div class="block generator-block">
+    <div class="container">
+        <!-- поле пароля + кнопки -->
+        <div class="password-area">
+            <div class="password-input">
+                <input type="text" id="passwordOutput" readonly placeholder="Нажмите «Сгенерировать»">
+            </div>
+            <div class="btn-group">
+                <button id="generateBtn"><i class="fas fa-sync-alt"></i> Сгенерировать</button>
+                <button id="copyBtn" class="copy-btn"><i class="far fa-copy"></i> Копировать</button>
+            </div>
+        </div>
+
+        <!-- настройки -->
+        <div class="settings">
+            <div class="length-control">
+                <label><i class="fas fa-ruler"></i> Длина пароля (4–32):</label>
+                <input type="number" id="passwordLength" min="4" max="32" value="12" step="1">
+            </div>
+            <div class="checkboxes">
+                <label><input type="checkbox" id="useLowercase" checked> a-z (строчные)</label>
+                <label><input type="checkbox" id="useUppercase" checked> A-Z (прописные)</label>
+                <label><input type="checkbox" id="useDigits" checked> 0-9 (цифры)</label>
+                <label><input type="checkbox" id="useSymbols" checked> !@#$%^&*()_+-=[]{};:,.<>? (спецсимволы)</label>
+            </div>
+        </div>
+
+        <!-- индикатор надёжности -->
+        <div class="strength-section">
+            <div class="strength-meter">
+                <div class="strength-fill" id="strengthFill"></div>
+            </div>
+            <div class="strength-text">
+                <span id="strengthLabel">Надёжность: —</span>
+                <span class="entropy-bits" id="entropyValue">Энтропия: 0 бит</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- БЛОК 3: РЕКОМЕНДАЦИИ (вертикальный список) -->
+<div class="block tips-block">
+    <div class="container">
+        <h3><i class="fas fa-lightbulb"></i>Краткие советы по безопасности</h3>
+        <ul class="tips-list-vertical">
+            <li><i class="fas fa-dice-d6"></i> <strong>Не придумывайте сами</strong> – люди предсказуемы (даты, имена). Доверьтесь генератору.</li>
+            <li><i class="fas fa-fingerprint"></i> <strong>Уникальность критична</strong> – один пароль = один сервис. Повторы ведут к цепному взлому (credential stuffing).</li>
+            <li><i class="fas fa-laptop"></i> <strong>Используйте менеджер паролей</strong> – запоминать 15+ сложных паролей невозможно.</li>
+            <li><i class="fas fa-shield-alt"></i> <strong>Двухфакторная аутентификация (2FA)</strong> – спасёт даже при утечке пароля.</li>
+            <li><i class="fas fa-brain"></i> <strong>Остерегайтесь фишинга</strong> – не вводите пароль на чужих сайтах. Адрес должен быть точным.</li>
+            <li><i class="fas fa-chart-line"></i> <strong>Энтропия ≥ 60 бит – надёжно.</strong> Индикатор на этом сайтепокажет стойкость к перебору. Рекомендуем длину от 12 символов и все типы.</li>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Стили только для этого блока (соответствуют общему дизайну: серые тона, прямые углы) */
+    .tips-block {
+        width: 100%;
+        background: #f0f2f5;
+        border-top: 1px solid #cbd5e1;
+        border-bottom: 1px solid #cbd5e1;
+        padding: 2rem 1.5rem;
+    }
+    .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        width: 100%;
+    }
+    .tips-block h3 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.2rem;
+        color: #1e293b;
+        margin-bottom: 1.2rem;
+        font-weight: 700;
+    }
+    /* вертикальный список */
+    .tips-list-vertical {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        padding: 0;
+    }
+    .tips-list-vertical li {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        font-size: 0.9rem;
+        color: #2d3a48;
+    }
+    .tips-list-vertical li i {
+        color: #4b5563;
+        font-size: 1rem;
+        margin-top: 2px;
+        min-width: 22px;
+    }
+    .technical-note {
+        margin-top: 1.2rem;
+        font-size: 0.8rem;
+        background: #e5e7eb;
+        padding: 0.6rem 0.8rem;
+        border-left: 3px solid #6b7280;
+    }
+    @media (max-width: 480px) {
+        .tips-block {
+            padding: 1.5rem 1rem;
+        }
+        .tips-list-vertical li {
+            font-size: 0.85rem;
+        }
+    }
+</style>
+
+<!-- БЛОК 4: ПОДВАЛ -->
+<div class="block footer-block">
+    <div class="container">
+        <i class="far fa-copyright"></i> 2026 — Петров Дмитрий Геннадьевич | Сибирский политехнический техникум | Проект «Генератор надёжных паролей»<br>
+        Генерация на стороне клиента. Данные не сохраняются и не передаются.
+    </div>
+</div>
+
+<script>
+    (function() {
+        // DOM элементы
+        const passwordOutput = document.getElementById('passwordOutput');
+        const generateBtn = document.getElementById('generateBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const lengthInput = document.getElementById('passwordLength');
+        const useLowercase = document.getElementById('useLowercase');
+        const useUppercase = document.getElementById('useUppercase');
+        const useDigits = document.getElementById('useDigits');
+        const useSymbols = document.getElementById('useSymbols');
+        const strengthFill = document.getElementById('strengthFill');
+        const strengthLabelSpan = document.getElementById('strengthLabel');
+        const entropySpan = document.getElementById('entropyValue');
+
+        // Наборы символов
+        const LOWERS = 'abcdefghijklmnopqrstuvwxyz';
+        const UPPERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const DIGITS = '0123456789';
+        const SYMBOLS = '!@#$%^&*()_+-=[]{};:,.<>?';
+
+        // получить актуальный алфавит
+        function getCharacterSet() {
+            let chars = '';
+            if (useLowercase.checked) chars += LOWERS;
+            if (useUppercase.checked) chars += UPPERS;
+            if (useDigits.checked) chars += DIGITS;
+            if (useSymbols.checked) chars += SYMBOLS;
+            if (chars.length === 0) {
+                useLowercase.checked = true;
+                chars = LOWERS;
+            }
+            return chars;
+        }
+
+        // генерация пароля с гарантией наличия каждого типа (криптостойкая)
+        function generateSecurePassword(length) {
+            let chars = getCharacterSet();
+            if (chars.length === 0) return '';
+
+            const randomBuffer = new Uint32Array(length);
+            crypto.getRandomValues(randomBuffer);
+            let password = '';
+            for (let i = 0; i < length; i++) {
+                const idx = randomBuffer[i] % chars.length;
+                password += chars[idx];
+            }
+
+            // Проверяем, что пароль содержит хотя бы один символ каждого ИСПОЛЬЗУЕМОГО типа
+            const needLower = useLowercase.checked;
+            const needUpper = useUppercase.checked;
+            const needDigit = useDigits.checked;
+            const needSymbol = useSymbols.checked;
+
+            let finalPass = password;
+            let attempts = 0;
+            const maxAttempts = 4;
+            while (attempts < maxAttempts) {
+                const hasLower = /[a-z]/.test(finalPass);
+                const hasUpper = /[A-Z]/.test(finalPass);
+                const hasDigit = /\d/.test(finalPass);
+                const hasSymbol = new RegExp(`[${SYMBOLS.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}]`).test(finalPass);
+                let missing = [];
+                if (needLower && !hasLower) missing.push('lower');
+                if (needUpper && !hasUpper) missing.push('upper');
+                if (needDigit && !hasDigit) missing.push('digit');
+                if (needSymbol && !hasSymbol) missing.push('symbol');
+                if (missing.length === 0) break;
+
+                // замена случайного символа на нужный тип
+                const pos = Math.floor(Math.random() * finalPass.length);
+                let newChar = '';
+                const type = missing[Math.floor(Math.random() * missing.length)];
+                if (type === 'lower') newChar = LOWERS[Math.floor(Math.random() * LOWERS.length)];
+                else if (type === 'upper') newChar = UPPERS[Math.floor(Math.random() * UPPERS.length)];
+                else if (type === 'digit') newChar = DIGITS[Math.floor(Math.random() * DIGITS.length)];
+                else if (type === 'symbol') newChar = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+                finalPass = finalPass.substring(0, pos) + newChar + finalPass.substring(pos + 1);
+                attempts++;
+            }
+            return finalPass;
+        }
+
+        // обновить индикатор стойкости
+        function updateStrengthMeter(password) {
+            if (!password || password === '') {
+                strengthFill.style.width = '0%';
+                strengthLabelSpan.innerText = 'Надёжность: —';
+                entropySpan.innerText = 'Энтропия: 0 бит';
+                return;
+            }
+            let alphabetSize = 0;
+            if (useLowercase.checked) alphabetSize += LOWERS.length;
+            if (useUppercase.checked) alphabetSize += UPPERS.length;
+            if (useDigits.checked) alphabetSize += DIGITS.length;
+            if (useSymbols.checked) alphabetSize += SYMBOLS.length;
+            if (alphabetSize === 0) alphabetSize = 1;
+            const length = password.length;
+            let entropy = length * Math.log2(alphabetSize);
+            entropy = Math.round(entropy * 10) / 10;
+            entropySpan.innerText = `Энтропия: ${entropy} бит`;
+
+            let level = '';
+            let percent = 0;
+            let bgColor = '#6b7280';
+            if (entropy < 28) { level = 'Очень слабый'; percent = 20; bgColor = '#b91c1c'; }
+            else if (entropy < 36) { level = 'Слабый'; percent = 35; bgColor = '#e07b39'; }
+            else if (entropy < 60) { level = 'Средний'; percent = 60; bgColor = '#eab308'; }
+            else if (entropy < 80) { level = 'Надёжный'; percent = 85; bgColor = '#2b6e4f'; }
+            else { level = 'Очень надёжный'; percent = 100; bgColor = '#0f4c3a'; }
+            strengthFill.style.width = `${percent}%`;
+            strengthFill.style.backgroundColor = bgColor;
+            strengthLabelSpan.innerHTML = `Надёжность: ${level} (${entropy} бит)`;
+        }
+
+        // перегенерация по всем параметрам
+        function refreshPassword() {
+            let length = parseInt(lengthInput.value, 10);
+            if (isNaN(length)) length = 12;
+            length = Math.min(32, Math.max(4, length));
+            lengthInput.value = length;
+            const newPwd = generateSecurePassword(length);
+            passwordOutput.value = newPwd;
+            updateStrengthMeter(newPwd);
+        }
+
+        // уведомление при копировании
+        let copyTimeout = null;
+        function showCopyMessage(msg, isOk) {
+            const btn = copyBtn;
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = `<i class="fas fa-${isOk ? 'check' : 'times'}"></i> ${msg}`;
+            if (copyTimeout) clearTimeout(copyTimeout);
+            copyTimeout = setTimeout(() => {
+                btn.innerHTML = originalHtml;
+            }, 1500);
+        }
+
+        // обработчики
+        generateBtn.addEventListener('click', () => refreshPassword());
+        copyBtn.addEventListener('click', async () => {
+            const pwd = passwordOutput.value;
+            if (!pwd || pwd === '') {
+                showCopyMessage('Нет пароля', false);
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(pwd);
+                showCopyMessage('Скопировано!', true);
+            } catch(e) {
+                passwordOutput.select();
+                document.execCommand('copy');
+                showCopyMessage('Скопировано', true);
+            }
+        });
+
+        lengthInput.addEventListener('input', () => {
+            let val = parseInt(lengthInput.value, 10);
+            if (isNaN(val)) val = 12;
+            val = Math.min(32, Math.max(4, val));
+            lengthInput.value = val;
+            refreshPassword();
+        });
+
+        const checkboxes = [useLowercase, useUppercase, useDigits, useSymbols];
+        checkboxes.forEach(cb => cb.addEventListener('change', refreshPassword));
+
+        // Инициализация: генерируем пароль при загрузке
+        refreshPassword();
+    })();
+</script>
+</body>
+</html>
