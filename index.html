@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Генератор надёжных паролей</title>
-    <!-- Font Awesome 6 (иконки) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
@@ -232,13 +231,6 @@
             margin-top: 2px;
             min-width: 22px;
         }
-        .technical-note {
-            margin-top: 1.2rem;
-            font-size: 0.8rem;
-            background: #e5e7eb;
-            padding: 0.6rem 0.8rem;
-            border-left: 3px solid #6b7280;
-        }
 
         .footer-block {
             background: #eef2f5;
@@ -382,15 +374,11 @@
         }
 
         function generateSecurePassword(length) {
-            // Если длина 0 – сразу пустая строка
             if (length === 0) return '';
-
             let chars = getCharacterSet();
             if (chars.length === 0) return '';
 
             const activeTypes = getActiveTypesCount();
-
-            // Если длина меньше количества выбранных типов – просто случайные символы (без принудительного включения всех типов)
             if (length < activeTypes) {
                 const randomBuffer = new Uint32Array(length);
                 crypto.getRandomValues(randomBuffer);
@@ -402,7 +390,6 @@
                 return password;
             }
 
-            // Обычная генерация с гарантией наличия каждого типа
             const randomBuffer = new Uint32Array(length);
             crypto.getRandomValues(randomBuffer);
             let password = '';
@@ -479,12 +466,18 @@
             strengthLabelSpan.innerHTML = `Надёжность: ${level} (${entropy} бит)`;
         }
 
+        // Функция для получения корректного числа из поля длины
+        function getNormalizedLength() {
+            let raw = lengthInput.value.trim();
+            if (raw === '') return 0;
+            let parsed = parseInt(raw, 10);
+            if (isNaN(parsed)) return 0;
+            return Math.min(32, Math.max(0, parsed));
+        }
+
         function refreshPassword() {
-            let length = parseInt(lengthInput.value, 10);
-            if (isNaN(length)) length = 12;
-            // Теперь минимум 0, максимум 32
-            length = Math.min(32, Math.max(0, length));
-            lengthInput.value = length;
+            let length = getNormalizedLength();
+            lengthInput.value = length; // синхронизируем поле (например, "0")
             const newPwd = generateSecurePassword(length);
             passwordOutput.value = newPwd;
             updateStrengthMeter(newPwd);
@@ -502,6 +495,7 @@
         }
 
         generateBtn.addEventListener('click', () => refreshPassword());
+
         copyBtn.addEventListener('click', async () => {
             const pwd = passwordOutput.value;
             if (!pwd || pwd === '') {
@@ -518,11 +512,18 @@
             }
         });
 
-        lengthInput.addEventListener('input', () => {
-            let val = parseInt(lengthInput.value, 10);
-            if (isNaN(val)) val = 12;
-            // 0 разрешён
-            val = Math.min(32, Math.max(0, val));
+        // Обработчик ввода: разрешаем пустое поле, не меняем его принудительно,
+        // только при потере фокуса или по enter нормализуем.
+        lengthInput.addEventListener('input', function() {
+            // Если пользователь стёр всё, оставляем пустым — не трогаем.
+            // Но чтобы генерация не срабатывала на каждый символ с пустым значением,
+            // будем вызывать refreshPassword, но с учётом пустоты как 0.
+            refreshPassword();
+        });
+
+        // Дополнительно: при потере фокуса, если поле пустое или некорректное, ставим 0
+        lengthInput.addEventListener('blur', function() {
+            let val = getNormalizedLength();
             lengthInput.value = val;
             refreshPassword();
         });
