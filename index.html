@@ -552,7 +552,7 @@
         function refreshPassword() {
             let length = parseInt(lengthInput.value, 10);
             if (isNaN(length)) length = 12;
-            length = Math.min(32, Math.max(4, length));
+            length = Math.min(32, Math.max(1, length));
             lengthInput.value = length;
             const newPwd = generateSecurePassword(length);
             passwordOutput.value = newPwd;
